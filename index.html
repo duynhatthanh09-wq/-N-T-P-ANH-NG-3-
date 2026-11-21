@@ -1,0 +1,513 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#0f1724">
+  <title>Ôn thi Tiếng Anh</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #0f1724;
+      --panel: #16213a;
+      --raised: #1d2b4a;
+      --border: #2a3a5c;
+      --text: #e8edf6;
+      --muted: #9fb0cc;
+      --gold: #d9a441;
+      --correct: #37b87a;
+      --wrong: #e0556b;
+      --submit: #4d8bff;
+      --review: #2f7d5b;
+      --header-height: 180px;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font: 15px/1.55 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    }
+    button, input { font: inherit; }
+    button { cursor: pointer; }
+    button:focus-visible, input:focus-visible, a:focus-visible {
+      outline: 2px solid var(--gold);
+      outline-offset: 3px;
+    }
+    [hidden] { display: none !important; }
+    .wrap { width: min(100% - 40px, 900px); margin-inline: auto; }
+    .site-header {
+      position: sticky;
+      z-index: 2;
+      top: 0;
+      background: var(--bg);
+      border-bottom: 1px solid var(--border);
+    }
+    .title-row {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 12px;
+      padding-top: 19px;
+    }
+    h1 { font-size: clamp(23px, 4.2vw, 31px); line-height: 1.14; letter-spacing: -.025em; margin: 0; }
+    .total { color: var(--muted); white-space: nowrap; }
+    .tabs { display: flex; gap: 8px; overflow-x: auto; padding: 13px 4px 11px; margin-inline: -4px; }
+    .tab, .button {
+      border: 1px solid var(--border);
+      border-radius: 9px;
+      padding: 8px 13px;
+      min-height: 44px;
+      color: var(--text);
+      background: var(--raised);
+      font-weight: 650;
+    }
+    .tab { flex: 0 0 auto; white-space: nowrap; }
+    .tab[aria-pressed="true"] { background: var(--gold); border-color: var(--gold); color: var(--bg); }
+    .tab.review { background: var(--review); border-color: var(--review); color: #fff; }
+    .tab.review[aria-pressed="true"] { box-shadow: inset 0 0 0 1px var(--gold); border-color: var(--gold); }
+    .toolbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px 14px;
+      min-height: 62px;
+      padding-block: 8px 10px;
+      border-top: 1px solid var(--border);
+    }
+    .counters { display: flex; flex-wrap: wrap; gap: 3px 17px; color: var(--muted); }
+    .counters span { white-space: nowrap; }
+    .number { font-weight: 750; color: var(--text); font-variant-numeric: tabular-nums; margin-inline-start: 3px; }
+    .positive { color: var(--correct); }
+    .negative { color: var(--wrong); }
+    .shuffle { color: var(--gold); border-color: var(--gold); background: var(--bg); white-space: nowrap; }
+    .search {
+      width: 100%;
+      min-height: 44px;
+      padding: 8px 12px;
+      border: 1px solid var(--border);
+      border-radius: 9px;
+      color: var(--text);
+      background: var(--panel);
+    }
+    .search::placeholder { color: var(--muted); opacity: 1; }
+    main { padding-block: 19px 32px; }
+    .questions { display: grid; gap: 14px; }
+    .card, .result {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 17px 19px;
+      scroll-margin-top: calc(var(--header-height) + 12px);
+    }
+    .question-title {
+      display: grid;
+      grid-template-columns: auto minmax(0, 1fr);
+      align-items: baseline;
+      gap: 5px 12px;
+      margin: 0 0 12px;
+      font-size: 15px;
+    }
+    .question-number { color: var(--gold); font-weight: 750; white-space: nowrap; }
+    .option-list { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+    .option {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      width: 100%;
+      min-height: 44px;
+      padding: 7px 10px;
+      border: 1px solid var(--border);
+      border-radius: 9px;
+      text-align: start;
+      color: var(--text);
+      background: var(--raised);
+    }
+    button.option:not(:disabled):hover, .button:hover, .tab:hover { filter: brightness(1.13); }
+    .option:disabled { cursor: default; opacity: 1; }
+    .letter {
+      display: inline-grid;
+      place-items: center;
+      flex: 0 0 26px;
+      height: 26px;
+      border-radius: 6px;
+      background: var(--bg);
+      color: var(--muted);
+      font-weight: 700;
+    }
+    .option.is-correct { border-color: var(--correct); background: #17382f; font-weight: 700; }
+    .option.is-wrong { border-color: var(--wrong); background: #402536; }
+    .is-correct .letter { background: var(--correct); color: var(--bg); }
+    .is-wrong .letter { background: var(--wrong); color: var(--bg); }
+    .feedback { margin: 10px 0 0; color: var(--gold); font-weight: 650; }
+    .actions { display: flex; flex-wrap: wrap; gap: 9px; margin-top: 17px; }
+    .submit { background: var(--submit); border-color: var(--submit); color: var(--bg); }
+    .result { margin-top: 12px; }
+    .result h2 { margin: 0 0 4px; font-size: 17px; }
+    .score { margin: 0 0 6px; font-size: 24px; line-height: 1.2; font-weight: 750; }
+    .result-summary { margin: 0; color: var(--muted); }
+    .wrong-links { display: flex; flex-wrap: wrap; align-items: center; gap: 7px; padding-top: 12px; }
+    .wrong-link { color: var(--text); background: #402536; border-color: var(--wrong); }
+    .empty { margin: 0; color: var(--muted); }
+    mark { border-radius: 2px; background: #f4ce62; color: #151c28; }
+    .visually-hidden {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip-path: inset(50%);
+      white-space: nowrap;
+    }
+    @media (max-width: 560px) {
+      .wrap { width: calc(100% - 24px); }
+      .title-row { padding-top: 13px; }
+      .counters { gap: 3px 10px; }
+      .toolbar { flex-wrap: wrap; }
+      .card, .result { padding: 13px; }
+      .question-title { gap: 4px 8px; }
+    }
+    @media (max-width: 380px) {
+      .option-list { grid-template-columns: minmax(0, 1fr); }
+    }
+  </style>
+</head>
+<body>
+  <header class="site-header" id="header">
+    <div class="wrap">
+      <div class="title-row">
+        <h1>Ôn thi Tiếng Anh</h1>
+        <span class="total" id="total"></span>
+      </div>
+      <nav class="tabs" id="tabs" aria-label="Các phần ôn thi"></nav>
+      <div id="quiz-tools" class="toolbar">
+        <div class="counters" id="counters" aria-live="polite" aria-atomic="true"></div>
+        <button type="button" class="button shuffle" id="shuffle">🔀 Trộn lại phần này</button>
+      </div>
+      <div id="review-tools" class="toolbar" hidden>
+        <label class="visually-hidden" for="search">Tìm câu hỏi</label>
+        <input type="search" class="search" id="search" placeholder="Tìm câu hỏi…" autocomplete="off">
+      </div>
+    </div>
+  </header>
+  <main class="wrap" id="main" aria-label="Nội dung ôn thi">
+    <div class="questions" id="questions"></div>
+    <div class="actions" id="actions">
+      <button type="button" class="button submit" id="grade">✅ Nộp / Chấm</button>
+      <button type="button" class="button" id="reset">↺ Làm lại</button>
+    </div>
+    <section id="result" class="result" tabindex="-1" aria-labelledby="result-title" hidden></section>
+    <div id="announcement" class="visually-hidden" role="status" aria-atomic="true"></div>
+  </main>
+  <script>
+    "use strict";
+
+    // The last value is the original answer letter from the marked images.
+    const source = [
+      [5, "The letter _____ to me 5 days ago, but I don’t know who sent it to me.", ["is sent", "was sent", "is sold", "was sold"], "B"],
+      [6, "The email from John _____ to her every weekend, but she never replies.", ["is sent", "was sent", "is sold", "was sold"], "A"],
+      [7, "Food _____ at the convenience store 24 hours a day, 7 days a week.", ["is sent", "was sent", "is sold", "was sold"], "C"],
+      [8, "My house _____ to a rich man in the town.", ["is sent", "was sent", "is sold", "was sold"], "D"],
+      [9, "He called me _____ he arrived New York. He did it as he had promised!", ["when", "as soon as", "before", "on"], "B"],
+      [11, "_____ hearing the news of his mother’s death, he was very sad.", ["When", "As soon as", "Before", "On"], "D"],
+      [12, "_____ he cooks, he washes his hand carefully.", ["When", "As soon as", "Before", "On"], "C"],
+      [13, "The chef decorated the dish with spring onion _____ he completed it.", ["when", "as soon as", "before", "after"], "D"],
+      [14, "_____ they are melted, add some salt and green paper.", ["Once", "As soon as", "Before", "On"], "A"],
+      [20, "He gets stomachache so his doctor advised him not to eat _____ food and drinks.", ["bland", "salty", "sour", "spicy"], "C"],
+      [21, "Thai food is so hot and _____, but it’s good and delicious.", ["bland", "salty", "sour", "spicy"], "D"],
+      [22, "This dish is bad and _____, and it isn’t worth the price!", ["bland", "salty", "sour", "spicy"], "A"],
+      [23, "He is _____! He makes me comfortable when talking with him.", ["sweet", "salty", "bitter", "spicy"], "A"],
+      [24, "This beef is too _____ for me to eat. I have lost 10 teeth, you know!", ["chewy", "creamy", "juicy", "sticky"], "A"],
+      [25, "This kind of _____ rice is used to make our traditional cake.", ["chewy", "creamy", "juicy", "sticky"], "D"],
+      [26, "These cookies are _____ that meets many people’s taste.", ["chewy", "clumsy", "juicy", "crunchy"], "D"],
+      [38, "I look forward to _____ your reply email.", ["received", "receive", "receiving", "receives"], "C"],
+      [39, "They had _____ the email before we came yesterday.", ["received", "receive", "receiving", "receives"], "A"],
+      [40, "I was really excited when I _____ his gift last weekend.", ["received", "receive", "receiving", "receives"], "A"],
+      [41, "My duties include _____ supplies from facility department.", ["received", "receive", "receiving", "receives"], "C"],
+      [42, "He objected to _____ cargo from TNT company.", ["received", "receive", "receiving", "receives"], "C"],
+      [43, "I have _____ money in the bank now.", ["few", "lots of", "much", "many"], "B"],
+      [44, "She doesn’t earn _____ money in that company.", ["few", "lots of", "much", "many"], "C"],
+      [45, "We have _____ coffee in the jar. We need to buy some.", ["few", "lots of", "much", "little"], "D"],
+      [46, "I have _____ friends so I feel lonely.", ["few", "lots of", "much", "many"], "A"],
+      [47, "How _____ people are there in the meeting?", ["few", "long", "much", "many"], "D"],
+      [48, "_____ wild animals they caught yesterday were enough to open a mini-zoo in the city.", ["Most of", "Most", "Almost", "All"], "A"],
+      [49, "_____ every man like to talk about sports and work.", ["Most of", "Most", "Almost", "Each"], "C"],
+      [50, "Why did _____ all staff attend the meeting yesterday?", ["most of", "most", "almost", "each"], "C"]
+    ];
+
+    const letters = ["A", "B", "C", "D"];
+    const pageSize = 25;
+    const bank = [];
+    const seen = new Set();
+
+    for (const [id, prompt, choices, answer] of source) {
+      const key = prompt.normalize("NFKC").trim().toLowerCase().replace(/\s+/g, " ");
+      if (seen.has(key)) continue;
+      seen.add(key);
+      bank.push({ id, prompt, choices, answer: letters.indexOf(answer) });
+    }
+
+    function shuffle(items) {
+      const copy = [...items];
+      for (let i = copy.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [copy[i], copy[j]] = [copy[j], copy[i]];
+      }
+      return copy;
+    }
+
+    function prepareQuestions(group) {
+      return group.map(question => ({
+        question,
+        order: shuffle([0, 1, 2, 3])
+      }));
+    }
+
+    const parts = [];
+    for (let start = 0; start < bank.length; start += pageSize) {
+      const group = bank.slice(start, start + pageSize);
+      parts.push({ group, questions: prepareQuestions(group), choices: new Map(), submitted: false });
+    }
+
+    const byId = id => document.getElementById(id);
+    const tabs = byId("tabs");
+    const list = byId("questions");
+    const result = byId("result");
+    const search = byId("search");
+    const header = byId("header");
+    const announcement = byId("announcement");
+    let active = 0;
+
+    function element(tag, className, text) {
+      const node = document.createElement(tag);
+      if (className) node.className = className;
+      if (text !== undefined) node.textContent = text;
+      return node;
+    }
+
+    function syncHeaderOffset() {
+      document.documentElement.style.setProperty("--header-height", header.offsetHeight + "px");
+    }
+
+    function startOfPage() {
+      window.scrollTo({ top: 0, behavior: "instant" });
+    }
+
+    function setTab(index) {
+      active = index;
+      render();
+      startOfPage();
+    }
+
+    function addTab(index, label, isReview) {
+      const button = element("button", isReview ? "tab review" : "tab", label);
+      button.type = "button";
+      button.setAttribute("aria-controls", "main");
+      button.addEventListener("click", () => setTab(index));
+      tabs.append(button);
+    }
+
+    function highlight(container, value, query) {
+      if (!query) {
+        container.textContent = value;
+        return;
+      }
+      const normalized = value.toLowerCase();
+      let cursor = 0;
+      let match = normalized.indexOf(query);
+      while (match !== -1) {
+        container.append(value.slice(cursor, match), element("mark", "", value.slice(match, match + query.length)));
+        cursor = match + query.length;
+        match = normalized.indexOf(query, cursor);
+      }
+      container.append(value.slice(cursor));
+    }
+
+    function questionCard(question, order, part, query = "") {
+      const card = element("article", "card");
+      card.id = "question-" + question.id;
+      card.tabIndex = -1;
+      card.setAttribute("aria-labelledby", "title-" + question.id);
+
+      const title = element("h2", "question-title");
+      title.id = "title-" + question.id;
+      const prompt = element("span");
+      prompt.lang = "en";
+      highlight(prompt, question.prompt, query);
+      title.append(element("span", "question-number", "Câu " + question.id), prompt);
+      card.append(title);
+
+      const options = element("div", "option-list");
+      const buttons = [];
+      const feedback = element("p", "feedback");
+      const correctPosition = order.indexOf(question.answer);
+      const answerText = "Đáp án đúng: " + letters[correctPosition];
+
+      order.forEach((originalIndex, shownIndex) => {
+        const option = element(part ? "button" : "div", "option");
+        const optionText = element("span", "", question.choices[originalIndex]);
+        optionText.lang = "en";
+        option.append(element("span", "letter", letters[shownIndex]), optionText);
+        if (part) {
+          option.type = "button";
+          option.addEventListener("click", () => {
+            if (part.choices.has(question.id)) return;
+            part.choices.set(question.id, originalIndex);
+            updateAnswer();
+            renderStats(part);
+            announcement.textContent = "Câu " + question.id + ". " +
+              (originalIndex === question.answer ? "Đúng. " : "Sai. ") + answerText;
+            if (part.submitted) renderResult(part);
+          });
+        }
+        buttons.push(option);
+        options.append(option);
+      });
+
+      function updateAnswer() {
+        const chosen = part?.choices.get(question.id);
+        const revealed = !part || chosen !== undefined;
+        order.forEach((originalIndex, shownIndex) => {
+          const option = buttons[shownIndex];
+          option.classList.toggle("is-correct", revealed && originalIndex === question.answer);
+          option.classList.toggle("is-wrong", revealed && originalIndex === chosen && chosen !== question.answer);
+          if (part) option.disabled = revealed;
+        });
+        feedback.hidden = !revealed;
+        feedback.textContent = revealed ? answerText : "";
+      }
+
+      card.append(options, feedback);
+      updateAnswer();
+      return card;
+    }
+
+    function stats(part) {
+      const wrong = [];
+      let right = 0;
+      part.questions.forEach(({ question }) => {
+        if (!part.choices.has(question.id)) return;
+        if (part.choices.get(question.id) === question.answer) {
+          right++;
+        } else {
+          wrong.push(question.id);
+        }
+      });
+      return { right, wrong, done: part.choices.size, total: part.questions.length };
+    }
+
+    function renderStats(part) {
+      const { right, wrong, done } = stats(part);
+      const count = (label, value, color = "") => {
+        const item = element("span", "", label + " ");
+        item.append(element("strong", "number " + color, value));
+        return item;
+      };
+      byId("counters").replaceChildren(count("Đã làm", done), count("Đúng", right, "positive"), count("Sai", wrong.length, "negative"));
+    }
+
+    function renderResult(part) {
+      result.hidden = !part.submitted;
+      if (!part.submitted) {
+        result.replaceChildren();
+        return;
+      }
+      const { right, wrong, done, total } = stats(part);
+      const percent = right * 100 / total;
+      const title = element("h2", "", "Kết quả");
+      title.id = "result-title";
+      const score = element("p", "score " + (percent >= 80 ? "positive" : "negative"),
+        right + "/" + total + " (" + percent.toLocaleString("vi-VN", { maximumFractionDigits: 1 }) + "%)");
+      const summary = element("p", "result-summary",
+        "Đúng " + right + " · Sai " + wrong.length + " · Chưa làm " + (total - done));
+      result.replaceChildren(title, score, summary);
+
+      if (wrong.length) {
+        const links = element("div", "wrong-links");
+        links.append(element("span", "", "Xem lại câu sai"));
+        for (const id of wrong) {
+          const link = element("button", "button wrong-link", "Câu " + id);
+          link.type = "button";
+          link.addEventListener("click", () => {
+            const card = byId("question-" + id);
+            card.focus({ preventScroll: true });
+            card.scrollIntoView({ block: "start" });
+          });
+          links.append(link);
+        }
+        result.append(links);
+      }
+    }
+
+    function renderReview() {
+      const query = search.value.trim().toLowerCase();
+      const cards = [];
+      bank.forEach(question => {
+        if (question.prompt.toLowerCase().includes(query)) {
+          cards.push(questionCard(question, [0, 1, 2, 3], null, query));
+        }
+      });
+      list.replaceChildren(...cards);
+      if (!cards.length) list.append(element("p", "empty", "Không tìm thấy câu hỏi phù hợp."));
+      announcement.textContent = cards.length + " câu hỏi";
+    }
+
+    function render() {
+      const part = parts[active];
+      const isReview = !part;
+      Array.from(tabs.children).forEach((tab, index) => tab.setAttribute("aria-pressed", String(active === index)));
+      byId("quiz-tools").hidden = isReview;
+      byId("review-tools").hidden = !isReview;
+      byId("actions").hidden = isReview;
+      announcement.textContent = "";
+      if (isReview) {
+        result.hidden = true;
+        result.replaceChildren();
+        renderReview();
+      } else {
+        list.replaceChildren(...part.questions.map(({ question, order }) =>
+          questionCard(question, order, part)));
+        renderStats(part);
+        renderResult(part);
+      }
+      syncHeaderOffset();
+    }
+
+    parts.forEach((part, index) => addTab(index, "Phần " + (index + 1) + " · " + part.group.length + " câu", false));
+    addTab(parts.length, "★ Tổng hợp", true);
+    byId("total").textContent = bank.length + " câu hỏi";
+
+    byId("shuffle").addEventListener("click", () => {
+      const part = parts[active];
+      part.questions = prepareQuestions(shuffle(part.group));
+      render();
+      announcement.textContent = "Đã trộn phần " + (active + 1);
+      startOfPage();
+    });
+
+    byId("grade").addEventListener("click", () => {
+      const part = parts[active];
+      part.submitted = true;
+      renderResult(part);
+      result.focus({ preventScroll: true });
+      result.scrollIntoView({ block: "nearest" });
+    });
+
+    byId("reset").addEventListener("click", () => {
+      const part = parts[active];
+      part.choices.clear();
+      part.submitted = false;
+      render();
+      announcement.textContent = "Đã xóa lựa chọn của phần " + (active + 1);
+      tabs.children[active].focus({ preventScroll: true });
+      startOfPage();
+    });
+
+    search.addEventListener("input", renderReview);
+    window.addEventListener("resize", syncHeaderOffset);
+    render();
+  </script>
+</body>
+</html>
